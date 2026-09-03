@@ -1,6 +1,6 @@
 """Testes do framework construídos com o próprio framework."""
 
-from test_framework import TestCase, TestResult, TestSuite
+from test_framework import TestCase, TestLoader, TestResult, TestRunner, TestSuite
 
 
 class TestStub(TestCase):
@@ -101,33 +101,31 @@ class TestSuiteTest(TestCase):
         assert result.summary() == "3 run, 1 failed, 1 error"
 
 
+class TestLoaderTest(TestCase):
+    def test_create_suite(self):
+        suite = TestLoader().make_suite(TestStub)
+        assert len(suite.tests) == 3
+
+    def test_create_suite_of_suites(self):
+        loader = TestLoader()
+        suite = TestSuite()
+        suite.add_test(loader.make_suite(TestStub))
+        suite.add_test(loader.make_suite(TestSpy))
+        assert len(suite.tests) == 2
+
+    def test_get_multiple_test_case_names(self):
+        names = TestLoader().get_test_case_names(TestStub)
+        assert names == ["test_error", "test_failure", "test_success"]
+
+    def test_get_no_test_case_names(self):
+        class Test(TestCase):
+            def foobar(self):
+                pass
+
+        assert TestLoader().get_test_case_names(Test) == []
+
+
 if __name__ == "__main__":
-    result = TestResult()
-    suite = TestSuite()
-    for test_case_class, test_names in (
-        (
-            TestCaseTest,
-            (
-                "test_result_success_run",
-                "test_result_failure_run",
-                "test_result_error_run",
-                "test_result_multiple_run",
-                "test_was_set_up",
-                "test_was_run",
-                "test_was_tear_down",
-                "test_template_method",
-            ),
-        ),
-        (
-            TestSuiteTest,
-            (
-                "test_suite_size",
-                "test_suite_success_run",
-                "test_suite_multiple_run",
-            ),
-        ),
-    ):
-        for test_name in test_names:
-            suite.add_test(test_case_class(test_name))
-    suite.run(result)
-    print(result.summary())
+    loader = TestLoader()
+    suite = loader.make_suite(TestLoaderTest)
+    TestRunner().run(suite)

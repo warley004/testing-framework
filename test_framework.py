@@ -67,3 +67,35 @@ class TestSuite:
     def run(self, result):
         for test in self.tests:
             test.run(result)
+
+
+class TestLoader:
+    """Descobre métodos de teste e cria suítes para uma classe de teste."""
+
+    TEST_METHOD_PREFIX = "test"
+
+    def get_test_case_names(self, test_case_class):
+        methods = dir(test_case_class)
+        return [
+            method
+            for method in methods
+            if method.startswith(self.TEST_METHOD_PREFIX)
+        ]
+
+    def make_suite(self, test_case_class):
+        suite = TestSuite()
+        for test_method_name in self.get_test_case_names(test_case_class):
+            suite.add_test(test_case_class(test_method_name))
+        return suite
+
+
+class TestRunner:
+    """Orquestra a execução de um caso ou suíte de testes."""
+
+    def __init__(self):
+        self.result = TestResult()
+
+    def run(self, test):
+        test.run(self.result)
+        print(self.result.summary())
+        return self.result
